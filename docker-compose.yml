@@ -1,0 +1,34 @@
+# docker-compose.yml
+# Defines the services, networks, and volumes for your local development environment.
+# Place this file in the root of your 'backend' NestJS project directory.
+
+version: '3.8' # Specifies the Compose file version (optional for newer Docker versions)
+
+services:
+  # Define the PostgreSQL database service container
+  db: # Service name - useful if other services in Compose need to connect
+    image: postgres:15-alpine # Use official Postgres image (version 15, alpine variant is smaller)
+                              # Using a specific version like :15 is better than :latest
+    container_name: service_hours_db_local # Explicit name for the running container
+    environment:
+      # Set credentials and database name using environment variables.
+      # Docker Compose automatically reads values from a '.env' file in the same directory.
+      # The ':-default' provides a fallback if the variable isn't in the .env file.
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme} # IMPORTANT: Set a strong password in your .env file!
+      POSTGRES_DB: ${DB_NAME:-service_hours_dev} # Use a distinct name for dev DB
+    ports:
+      # Map port 5432 inside the container to the specified host port (default 5432).
+      # Your NestJS app running on the host will connect to this host port.
+      # Format is "HOST:CONTAINER"
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Mount the named volume 'postgres_data' to the directory where Postgres stores its data.
+      # This ensures your database data persists even if the container is removed.
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped # Optional: Automatically restart the container unless manually stopped.
+
+# Declare the named volume used by the 'db' service
+volumes:
+  postgres_data:
+    driver: local # Use the default local driver for storing volume data on your host machine.

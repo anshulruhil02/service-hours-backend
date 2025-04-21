@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid()) 
+  authProviderId String    @unique             
+  email          String    @unique            
+
+  name           String                       
+  role           String    @default("student") 
+  schoolId       String?                       
+
+  createdAt      DateTime  @default(now())     // Automatically set when user record is created
+  updatedAt      DateTime  @updatedAt          // Automatically set when user record is updated
+
+  // --- Relationships ---
+  // Defines a one-to-many relationship: One User can have many Submissions.
+  // submissions    Submission[] 
+  
+  // @@map("users") // Optional: Explicitly map model name 'User' to table name 'users' if desired.
+}
+
+// --- IMPORTANT ---
+// You also need to define your Submission model and ensure the relation is set up there too.
+// Example structure for the relation part in Submission:
+// model Submission {
+//   id          String @id @default(cuid())
+//   // ... other submission fields (orgName, hours, status, etc.)
+//   student     User   @relation(fields: [studentId], references: [id]) // Relation field
+//   studentId   String // Foreign key field storing the User's internal id
+// }
