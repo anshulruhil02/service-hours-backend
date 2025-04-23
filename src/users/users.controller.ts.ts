@@ -1,14 +1,30 @@
-import { Module } from '@nestjs/common';
+import { Get, Module, Req, UseGuards } from '@nestjs/common';
 
 import { Controller, Post, Body, ValidationPipe, UsePipes } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from '@prisma/client';
+import { Request } from 'express'; // Need Request type from express
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Need your guard
 
 @Controller('users') // Route prefix: /users
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+    @Get('me') // Handles GET requests to /users/me
+    @UseGuards(JwtAuthGuard) // Apply the guard HERE - This makes the endpoint protected
+    getProfile(@Req() req: Request): User {
+      // The JwtAuthGuard verifies the token AND attaches our local user record
+      // to req.localUser based on the findOrCreate logic.
+      // We can now safely return this user record.
+
+      // Optional safety check - this shouldn't happen if guard works correctly
+      if (!req.localUser) {
+          throw new Error('User not found on request after authentication passed. Guard issue?'); 
+      }
+      console.log(req.localUser)
+      return req.localUser; 
+    }
   // POST /users
   @Post()
   // Apply validation pipe specifically here if not global, 

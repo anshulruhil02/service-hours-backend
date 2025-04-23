@@ -15,11 +15,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   name: string; // Keeping name mandatory as dcreate-user.dto.tsecided
 
-  @IsOptional()
-  @IsIn(['student', 'admin']) // Example roles
-  role?: string; // Optional, service might default to 'student'
-
-  @IsOptional()
   @IsString()
-  schoolId?: string; // Optional
+  @IsNotEmpty()
+  schoolId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  oen: string;
 }
