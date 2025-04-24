@@ -49,8 +49,18 @@ import {
   
     async canActivate(context: ExecutionContext): Promise<boolean> {
       const request = context.switchToHttp().getRequest<Request>();
-  
+      const authHeader = request.headers.authorization;
       try {
+        const token = authHeader?.split(' ')[1]; // Extract token after 'Bearer '
+
+      // --- ADD MORE LOGGING ---
+      this.logger.debug(`Extracted Token String: [${token}]`); // Log extracted token
+      // --- END LOGGING ---
+
+      if (!token) {
+          this.logger.warn('Authentication required: No token extracted from header.');
+          throw new UnauthorizedException('Authentication required: No token provided.');
+      }
         // Verify token using Clerk SDK - attaches 'auth' to request if valid
         // Use verifySessionToken for Bearer tokens or authenticateRequest for broader check
         const authObject = await this.clerkClient.verifyToken(
@@ -71,8 +81,8 @@ import {
         const clerkUser = await this.clerkClient.users.getUser(request.auth.userId);
         const primaryEmail = clerkUser.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
         const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Unnamed User'; // Construct name
-        const schooldId = '';
-        const oen = '';
+        const schooldId = clerkUser.unsafeMetadata.schoolId || '';
+        const oen = clerkUser.unsafeMetadata.oen || '';
 
         if (!primaryEmail) {
           this.logger.warn(`Could not find primary email for Clerk user ${request.auth.userId}`);
@@ -83,9 +93,7 @@ import {
         const localDbUser = await this.usersService.findOrCreateUser({
           authProviderId: request.auth.userId,
           email: primaryEmail,
-          name: name,
-          schoolId: '',
-          oen: ''
+          name: name
         });
   
         // Attach OUR local user record to the request

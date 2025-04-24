@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "schoolId" DROP NOT NULL,
+ALTER COLUMN "oen" DROP NOT NULL;

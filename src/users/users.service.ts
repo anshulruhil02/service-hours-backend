@@ -8,8 +8,6 @@ interface ClerkAuthData {
   authProviderId: string; 
   email: string;
   name: string; 
-  schoolId: string;
-  oen: string;
 }
 
 @Injectable()
@@ -37,14 +35,6 @@ export class UsersService {
 
     if (user) {
       this.logger.log(`Found existing user ${user.id} for authProviderId ${authData.authProviderId}`);
-      // Optional: Check if email/name needs updating based on authData and update if necessary
-      // const needsUpdate = user.email !== authData.email || user.name !== authData.name;
-      // if (needsUpdate) {
-      //   return this.prisma.user.update({
-      //     where: { authProviderId: authData.authProviderId },
-      //     data: { email: authData.email, name: authData.name },
-      //   });
-      // }
       return user;
     }
 
@@ -55,9 +45,7 @@ export class UsersService {
         data: {
           authProviderId: authData.authProviderId,
           email: authData.email,
-          name: authData.name,
-          schoolId: authData.schoolId,
-          oen: authData.oen
+          name: authData.name
         },
       });
       this.logger.log(`Created new user ${newUser.id}`);

@@ -19,8 +19,8 @@ model User {
   email          String    @unique            
 
   name           String                       
-  schoolId       String   
-  oen            String                    
+  schoolId       String?
+  oen            String?                   
 
   createdAt      DateTime  @default(now())     // Automatically set when user record is created
   updatedAt      DateTime  @updatedAt          // Automatically set when user record is updated

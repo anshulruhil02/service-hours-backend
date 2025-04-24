@@ -15,11 +15,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   name: string; // Keeping name mandatory as dcreate-user.dto.tsecided
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   schoolId: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   oen: string;
 }
