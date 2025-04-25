@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto'; // Import if using create method directly
+import { CreateUserDto } from './dto/create-user.dto'; 
+import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { User } from '@prisma/client';
 
 // Type for data expected from Clerk token/user fetch
@@ -93,6 +94,27 @@ export class UsersService {
         return null; 
     }
     return user;
+  }
+
+  async updateProfile(userId: string, dto: UpdateUserProfileDto): Promise<User> {
+    this.logger.log(`Updating profile for user ID: ${userId}`);
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          oen: dto.oen,
+          schoolId: dto.schoolId,
+          // add other updatable fields here later if needed
+        },
+      });
+      return updatedUser;
+    } catch (error) {
+      this.logger.error(`Failed to update profile for user ${userId}:`, error);
+      if (error.code === 'P2025') {
+          throw new NotFoundException(`User with ID ${userId} not found for update.`);
+      }
+      throw error; // Re-throw other errors
+    }
   }
   // Add other methods later (findAll, findOne, etc.)
 }
