@@ -24,20 +24,23 @@ model User {
 
   createdAt      DateTime  @default(now())     // Automatically set when user record is created
   updatedAt      DateTime  @updatedAt          // Automatically set when user record is updated
-
-  // --- Relationships ---
-  // Defines a one-to-many relationship: One User can have many Submissions.
-  // submissions    Submission[] 
-  
-  // @@map("users") // Optional: Explicitly map model name 'User' to table name 'users' if desired.
+  Submissions    Submission[]
 }
 
-// --- IMPORTANT ---
-// You also need to define your Submission model and ensure the relation is set up there too.
-// Example structure for the relation part in Submission:
-// model Submission {
-//   id          String @id @default(cuid())
-//   // ... other submission fields (orgName, hours, status, etc.)
-//   student     User   @relation(fields: [studentId], references: [id]) // Relation field
-//   studentId   String // Foreign key field storing the User's internal id
-// }
+model Submission {
+  id             String    @id @default(cuid())
+  orgName        String    // Name of the organization
+  hours          Float     // Number of hours volunteered (use Float or Decimal)
+  submissionDate DateTime  // Date the hours were completed
+  description    String?   // Optional description of activities
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // --- Define Relationship ---
+  student        User      @relation(fields: [studentId], references: [id], onDelete: Cascade) // Link to User, Cascade delete if user is deleted
+  studentId      String    // Foreign key storing the User's internal id
+
+  // Optional: Add index for faster lookups by student
+  // @@index([studentId]) 
+}
