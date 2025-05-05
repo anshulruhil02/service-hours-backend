@@ -8,6 +8,24 @@ export class SubmissionsService {
     private readonly logger = new Logger(SubmissionsService.name)
     constructor(private prisma: PrismaService) {}
 
+    async findAllForUser(userId: string): Promise<Submission[]> {
+        try {
+            const submissions = await this.prisma.submission.findMany({
+                where: {
+                    student: {
+                        id: userId
+                    }
+                },
+                orderBy: {
+                    submissionDate: 'desc'
+                }
+            })
+            return submissions
+        } catch(error) {
+            this.logger.error(`Failed to find submissions for user ${userId}:`, error); 
+            throw error
+        }
+    }
     async create(userId: string, createSubmissionDto: CreateSubmissionDto): Promise<Submission> {
         try {
             const newSubmission = await this.prisma.submission.create({
@@ -27,6 +45,7 @@ export class SubmissionsService {
 
             return newSubmission
         } catch(error) {
+            this.logger.error(`Failed to create submission for user ${userId}:`, error);    
             throw error
         }
     }

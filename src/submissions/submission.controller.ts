@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, UsePipes, ValidationPipe, InternalServerErrorException, Get } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Your authentication guard
@@ -11,6 +11,16 @@ import { Submission } from '@prisma/client';
 @UseGuards(JwtAuthGuard) // Protect ALL routes in this controller
 export class SubmissionsController {
     constructor(private readonly submissionsService: SubmissionsService) {}
+
+    @Get()
+    async findAllForUser(@Req() req: Request): Promise<Submission[]> {
+        if (!req.localUser?.id) {
+            throw new InternalServerErrorException('Authenticated user not found on request.');
+        }
+
+        const userId = req.localUser.id;
+        return this.submissionsService.findAllForUser(userId);
+    }
 
     @Post()
     // Use global validation pipe (if configured in main.ts) OR apply specifically:
