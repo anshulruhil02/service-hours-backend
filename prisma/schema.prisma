@@ -33,6 +33,7 @@ model Submission {
   hours          Float     // Number of hours volunteered (use Float or Decimal)
   submissionDate DateTime  // Date the hours were completed
   description    String?   // Optional description of activities
+  signatureUrl   String?
   
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
