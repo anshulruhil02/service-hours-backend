@@ -82,4 +82,23 @@ export class SubmissionsController {
          // Service method handles verifying user ownership and updating the record
          return this.submissionsService.saveSignatureReference(userId, submissionId, body.signatureKey);
     }
+
+    @Get(':id/signature') 
+    async getSignatureViewUrl(
+        @Req() req: Request,
+        @Param('id' /* Add ID validation Pipe */) submissionId: string 
+    ): Promise<{ viewUrl: string | null }> { // Return type matches service
+         if (!req.localUser?.id) { 
+             throw new InternalServerErrorException('Auth user not found'); 
+         }
+         const userId = req.localUser.id;
+         // Service method handles verifying ownership and checking if signature exists
+         const result = await this.submissionsService.getSignatureViewUrl(userId, submissionId);
+         // Optionally handle the null case differently here if needed, 
+         // but returning it allows the frontend to know there's no signature.
+         // if (!result.viewUrl) {
+         //     throw new NotFoundException('Signature not found for this submission.');
+         // }
+         return result; 
+    }
 }

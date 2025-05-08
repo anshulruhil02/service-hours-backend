@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateSubmissionDto } from '../users/dto/create-submission.dto';
 import { Submission } from '@prisma/client';
 import { ConfigService } from '@nestjs/config'; 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"; 
 import { randomUUID } from 'crypto';
 
@@ -145,4 +145,67 @@ export class SubmissionsService {
             throw new InternalServerErrorException('Could not save signature reference.');
        }
    }
+
+    async getSignatureViewUrl(userId: string, submissionId: string): Promise<{ viewUrl: string | null }> {
+        this.logger.log(`Generating signature view URL for submission ${submissionId} requested by user ${userId}`);
+
+        // Verify the user owns the submission
+        const submission = await this.prisma.submission.findUnique({
+            where: { id: submissionId },
+            select: { studentId: true, signatureUrl: true } // Select only needed fields
+        });
+
+        if (!submission) {
+            throw new NotFoundException(`Submission with ID ${submissionId} not found.`);
+        }
+        if (submission.studentId !== userId) {
+            // In a real app, you might allow admins to view too, add role check here if needed
+            this.logger.warn(`User ${userId} attempted to get view URL for submission ${submissionId} they don't own.`);
+            throw new ForbiddenException(`User does not own submission ${submissionId}.`);
+        }
+        
+        // Check if a signature URL/key was actually saved
+        if (!submission.signatureUrl || submission.signatureUrl.trim() === '') {
+            this.logger.log(`No signature URL found for submission ${submissionId}.`);
+            return { viewUrl: null }; // No signature to view
+        }
+
+        // Extract the S3 key from the stored URL/key. 
+        // This assumes you stored the full URL previously. If you stored just the key, use that directly.
+        let s3Key: string;
+        try {
+             // Attempt to parse the full URL to get the path/key
+             const urlObject = new URL(submission.signatureUrl);
+             s3Key = urlObject.pathname.startsWith('/') ? urlObject.pathname.substring(1) : urlObject.pathname; // Remove leading '/' if present
+             if (!s3Key.startsWith(`signatures/${userId}/`)) {
+                 // Basic check to ensure the key structure seems correct for this user/submission
+                 this.logger.error(`Stored signatureUrl path [${s3Key}] does not match expected structure for user ${userId}.`);
+                 throw new InternalServerErrorException('Invalid signature reference found.');
+             }
+        } catch (e) {
+             // If parsing URL fails, maybe you stored just the key? Assume that.
+             this.logger.warn(`Could not parse signatureUrl as URL, assuming it's the key: ${submission.signatureUrl}`);
+             s3Key = submission.signatureUrl;
+             // Add validation here if storing only the key
+        }
+
+
+        this.logger.log(`Generating GET URL for S3 key: ${s3Key}`);
+
+        // Create the command for GetObject
+        const command = new GetObjectCommand({
+            Bucket: this.bucketName,
+            Key: s3Key,
+        });
+
+        try {
+            // Generate the pre-signed GET URL (valid for e.g., 1 minute)
+            const viewUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 60 }); 
+            this.logger.log(`Generated pre-signed GET URL successfully.`);
+            return { viewUrl };
+        } catch (error) {
+            this.logger.error(`Failed to generate pre-signed GET URL for key ${s3Key}:`, error.stack);
+            throw new InternalServerErrorException('Could not prepare signature view URL.');
+        }
+    }
 }
