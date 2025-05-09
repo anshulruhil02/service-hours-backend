@@ -46,8 +46,8 @@ export class SubmissionsController {
      * The frontend calls this BEFORE uploading the signature file.
      * ':id' refers to the ID of the submission record.
      */
-    @Get(':id/signature-upload-url') 
-    async getSignatureUploadUrl(
+    @Get(':id/supervisor-signature-upload-url') 
+    async getSupervisorSignatureUploadUrl(
         @Req() req: Request,
         // Extract the 'id' parameter from the URL path
         @Param('id' /* maybe add a validation Pipe here? */) submissionId: string 
@@ -57,19 +57,13 @@ export class SubmissionsController {
          }
          const userId = req.localUser.id;
          // Service method handles verifying user ownership of the submission
-         return this.submissionsService.getSignatureUploadUrl(userId, submissionId);
+         return this.submissionsService.getSupervisorSignatureUploadUrl(userId, submissionId);
     }
 
-     // --- NEW: PATCH /submissions/:id/signature ---
-    /**
-     * Saves the reference (S3 key) of the uploaded signature 
-     * to the submission record after the frontend uploads the file to S3.
-     * ':id' refers to the ID of the submission record.
-     */
-    @Patch(':id/signature')
+    @Patch(':id/supervisor-signature')
     // Apply validation pipe to ensure 'signatureKey' is present in the body
     @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })) 
-    async saveSignatureReference(
+    async saveSupervisorSignatureReference(
          @Req() req: Request,
          @Param('id' /* Add ID validation Pipe here if needed */) submissionId: string,
          // Validate the incoming request body against SaveSignatureDto
@@ -80,11 +74,11 @@ export class SubmissionsController {
          }
          const userId = req.localUser.id;
          // Service method handles verifying user ownership and updating the record
-         return this.submissionsService.saveSignatureReference(userId, submissionId, body.signatureKey);
+         return this.submissionsService.saveSupervisorSignatureReference(userId, submissionId, body.signatureKey);
     }
 
-    @Get(':id/signature') 
-    async getSignatureViewUrl(
+    @Get(':id/supervisor-signature') 
+    async getSupervisorSignatureViewUrl(
         @Req() req: Request,
         @Param('id' /* Add ID validation Pipe */) submissionId: string 
     ): Promise<{ viewUrl: string | null }> { // Return type matches service
@@ -93,12 +87,54 @@ export class SubmissionsController {
          }
          const userId = req.localUser.id;
          // Service method handles verifying ownership and checking if signature exists
-         const result = await this.submissionsService.getSignatureViewUrl(userId, submissionId);
-         // Optionally handle the null case differently here if needed, 
-         // but returning it allows the frontend to know there's no signature.
-         // if (!result.viewUrl) {
-         //     throw new NotFoundException('Signature not found for this submission.');
-         // }
+         const result = await this.submissionsService.getSupervisorSignatureViewUrl(userId, submissionId);
          return result; 
     }
+
+    
+    @Get(':id/pre-approved-signature-upload-url') 
+    async getPreApprovedSignatureUploadUrl(
+        @Req() req: Request,
+        // Extract the 'id' parameter from the URL path
+        @Param('id' /* maybe add a validation Pipe here? */) submissionId: string 
+    ): Promise<{ uploadUrl: string; key: string }> { // Return type matches service
+         if (!req.localUser?.id) { 
+             throw new InternalServerErrorException('Authenticated user ID not found on request.'); 
+         }
+         const userId = req.localUser.id;
+         // Service method handles verifying user ownership of the submission
+         return this.submissionsService.getPreApprovedignatureUploadUrl(userId, submissionId);
+    }
+
+    @Patch(':id/pre-approved-signature')
+    // Apply validation pipe to ensure 'signatureKey' is present in the body
+    @UsePipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })) 
+    async savePreApprovedSignatureReference(
+         @Req() req: Request,
+         @Param('id' /* Add ID validation Pipe here if needed */) submissionId: string,
+         // Validate the incoming request body against SaveSignatureDto
+         @Body() body: SaveSignatureDto 
+    ): Promise<Submission> { // Return the updated submission record
+         if (!req.localUser?.id) { 
+             throw new InternalServerErrorException('Authenticated user ID not found on request.'); 
+         }
+         const userId = req.localUser.id;
+         // Service method handles verifying user ownership and updating the record
+         return this.submissionsService.savePreApprovedSignatureReference(userId, submissionId, body.signatureKey);
+    }
+
+    @Get(':id/pre-approved-signature') 
+    async getPreApprovedSignatureViewUrl(
+        @Req() req: Request,
+        @Param('id' /* Add ID validation Pipe */) submissionId: string 
+    ): Promise<{ viewUrl: string | null }> { // Return type matches service
+         if (!req.localUser?.id) { 
+             throw new InternalServerErrorException('Auth user not found'); 
+         }
+         const userId = req.localUser.id;
+         // Service method handles verifying ownership and checking if signature exists
+         const result = await this.submissionsService.getPreApprovedSignatureViewUrl(userId, submissionId);
+         return result; 
+    }
+
 }
