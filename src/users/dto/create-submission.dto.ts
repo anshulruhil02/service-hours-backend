@@ -1,5 +1,6 @@
 import { 
-    IsString, 
+    IsString,
+    IsEnum, 
     IsNotEmpty, 
     IsNumber, 
     IsPositive, 
@@ -9,19 +10,25 @@ import {
     IsUrl 
 } from 'class-validator';
 
+
 export class CreateSubmissionDto {
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @MaxLength(200) // Example max length
-    orgName: string;
+    orgName?: string;
 
     @IsNumber()
     @IsPositive()
-    hours: number;
+    @IsOptional()
+    hours?: number;
 
     @IsISO8601({ strict: true }) // Validate YYYY-MM-DDTHH:mm:ss.sssZ format
-    @IsNotEmpty()
-    submissionDate: string; // Receive as ISO 8601 string
+    @IsOptional()
+    submissionDate?: string; // Receive as ISO 8601 string
+
+    @IsEnum(['DRAFT', 'SUBMITTED'])
+    @IsOptional()
+    status?: 'DRAFT' | 'SUBMITTED';
 
     @IsString()
     @IsOptional()

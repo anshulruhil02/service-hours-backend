@@ -52,9 +52,9 @@ export class SubmissionsService {
                     orgName: createSubmissionDto.orgName,
                     hours: createSubmissionDto.hours,
                     // Convert ISO string date from DTO to JavaScript Date object for Prisma
-                    submissionDate: new Date(createSubmissionDto.submissionDate), 
+                    submissionDate: createSubmissionDto.submissionDate, 
                     description: createSubmissionDto.description,
-                    // proofUrl: createSubmissionDto.proofUrl, // Add later with file uploads
+                    status: createSubmissionDto.status,
                     student: {
                         // Connect the submission to the user using their internal ID
                         connect: { id: userId } 

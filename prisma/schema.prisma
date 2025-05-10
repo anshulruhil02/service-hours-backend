@@ -29,12 +29,13 @@ model User {
 
 model Submission {
   id             String    @id @default(cuid())
-  orgName        String    // Name of the organization
-  hours          Float     // Number of hours volunteered (use Float or Decimal)
-  submissionDate DateTime  // Date the hours were completed
-  description    String?   // Optional description of activities
+  orgName        String?   
+  hours          Float?     
+  submissionDate DateTime?  
+  description    String?
   supervisorSignatureUrl   String?
   preApprovedSignatureUrl  String?
+  status         SubmissionStatus @default(DRAFT)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -44,4 +45,9 @@ model Submission {
 
   // Optional: Add index for faster lookups by student
   // @@index([studentId]) 
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
 }
